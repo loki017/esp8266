@@ -1,0 +1,160 @@
+hai!
+i am trying control esp with firebase but i am getting this error when uploaded it getting reconnecting again and again.
+
+Exception (9):
+epc1=0x4020b588 epc2=0x00000000 epc3=0x00000000 excvaddr=0x68746f9d depc=0x00000000
+
+>>>stack>>>
+
+ctx: cont
+sp: 3ffffc60 end: 3fffffc0 offset: 0190
+3ffffdf0:  00000000 00000001 3ffffeb4 3ffee998  
+3ffffe00:  0000000b 3ffee960 3ffefa30 40205a4c  
+3ffffe10:  3ffe87b9 000001bb 3ffefa30 40206974  
+3ffffe20:  3ffe8870 0000003b 3ffefa30 40206da4  
+3ffffe30:  0000003b 3ffee960 0000002e 40203794  
+3ffffe40:  3ffffe88 0000003b 3ffffe70 40207798  
+3ffffe50:  3ffee95c 3ffffe70 3ffe8870 3ffffef0  
+3ffffe60:  3ffee95c 3ffffeb4 3ffefa2c 4020507f  
+3ffffe70:  3fff2424 003b003f 00fffeb4 3ffefcbc  
+3ffffe80:  0037003f 00ffff6c 3ffefac4 0019001f  
+3ffffe90:  00fe8806 3ffee958 3fffff6f 3ffffef0  
+3ffffea0:  3ffee95c 3ffe87ed 3ffef7d4 40202dd0  
+3ffffeb0:  3ffe8806 3ffef8a0 3ffefd64 3ffeea34  
+3ffffec0:  3fffff6c 3ffffef0 3ffe8806 40203758  
+3ffffed0:  3ffffef8 3fffff10 3fffff10 3ffeea34  
+3ffffee0:  3fffff6c 3ffef7d4 3ffee958 40204049  
+3ffffef0:  3ffee998 3ffefd70 00004646 4020952d  
+3fffff00:  3fffdad0 3ffee958 3fffff60 4020408a  
+3fffff10:  40206e20 3ffee9b8 3ffe88fe 40206e2c  
+3fffff20:  00000003 3ffee9b8 3ffe88fe 402070f5  
+3fffff30:  3ffee910 00000003 3fffff6c 40207798  
+3fffff40:  3fffdad0 3fffff6c 3ffe871c 402077ce  
+3fffff50:  3fffdad0 00000000 3ffee958 40201254  
+3fffff60:  007a1200 c028492b 80fee900 00314246  
+3fffff70:  00000000 83fee91c 3ffee958 40201184  
+3fffff80:  00000000 00000000 00000001 40100154  
+3fffff90:  3fffdad0 00000000 3ffee9f4 3ffeea34  
+3fffffa0:  3fffdad0 00000000 3ffee9f4 40208618  
+3fffffb0:  feefeffe feefeffe 3ffe857c 40100c39  
+<<<stack<<<
+
+--------------- CUT HERE FOR EXCEPTION DECODER ---------------
+
+ ets Jan  8 2013,rst cause:2, boot mode:(3,6)
+
+load 0x4010f000, len 3584, room 16 
+tail 0
+chksum 0xb0
+csum 0xb0
+v2843a5ac
+~ld
+connecting.
+
+arduino sketch 
+#include <ESP8266WiFi.h>
+#include <FirebaseArduino.h>
+
+#define FIREBASE_HOST "ioth-aef37.firebaseio.com" //Your Firebase Project URL without "http:", "\" and "/"
+#define FIREBASE_AUTH "ydce7MaPDmNdeeWQcJTjtx8D7eZyskxhxBblhdbf" //Your Firebase Database Secret goes here
+#define WIFI_SSID "vivo 1811"         //WiFi SSID name for which NodeMCU connects
+#define WIFI_PASSWORD "1234567890"      //SSID Password of your wifi network
+
+
+#define Relay1 14  //D5
+#define Relay2 12  //D6
+#define Relay3 13  //D7
+#define Relay4 15  //D8
+int rel1,rel2,rel3,rel4;
+
+void setup()
+{
+  Serial.begin(115200);// Set the baud rate 115200 in Serial Monitor to display debug messages
+  pinMode(Relay1,OUTPUT);
+  pinMode(Relay2,OUTPUT);
+  pinMode(Relay3,OUTPUT);
+  pinMode(Relay4,OUTPUT);
+  digitalWrite(Relay1,HIGH);
+  digitalWrite(Relay2,HIGH);
+  digitalWrite(Relay3,HIGH);
+  digitalWrite(Relay4,HIGH);
+  WiFi.begin(WIFI_SSID,WIFI_PASSWORD);
+  Serial.print("connecting");
+  while (WiFi.status()!=WL_CONNECTED){
+    Serial.print(".");
+    delay(500);
+  }
+  Serial.println();
+  Serial.print("connected:");
+  Serial.println(WiFi.localIP());
+
+  Firebase.begin(FIREBASE_HOST,FIREBASE_AUTH);
+  //Here the varialbe"FB1","FB2","FB3" and "FB4" needs to be the one which is used in our Firebase and MIT App Inventor
+  Firebase.setInt("FB1",0);                    
+  Firebase.setInt("FB2",0);
+  Firebase.setInt("FB3",0);
+  Firebase.setInt("FB4",0);
+ 
+}
+void firebasereconnect()
+{
+  Serial.println("Trying to reconnect");
+  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH); // initialize the firebase with HOST name anf AUTH key
+  }
+
+void loop()
+{
+  if (Firebase.failed())
+      {
+      Serial.print("setting number failed:");
+      Serial.println(Firebase.error());
+      firebasereconnect();
+      return;
+      }
+     
+  rel1=Firebase.getString("FB1").toInt();  //Reading the value of the varialble Status from the firebase
+  rel2=Firebase.getString("FB2").toInt();  //Reading the value of the varialble Status from the firebase
+  rel3=Firebase.getString("FB3").toInt();  //Reading the value of the varialble Status from the firebase
+  rel4=Firebase.getString("FB4").toInt();  //Reading the value of the varialble Status from the firebase
+ 
+  if(rel1==1)                        // If, the Status is 1, turn on the Relay1
+     {
+      digitalWrite(Relay1,LOW);
+      Serial.print("Relay 1 ON");
+    }
+ if(rel1==0)                         // If, the Status is 0, turn Off the Relay1
+    {                                      
+      digitalWrite(Relay1,HIGH);
+      Serial.print("Relay 1 OFF");
+    }
+if(rel2==1)                          // If, the Status is 1, turn on the Relay2
+     {
+      digitalWrite(Relay2,LOW);
+      Serial.print("Relay 2 ON");
+    }
+ if(rel2==0)                         // If, the Status is 0, turn Off the Relay2
+    {                                      
+      digitalWrite(Relay2,HIGH);
+      Serial.print("Relay 2 OFF");
+    }
+if(rel3==1)                          // If, the Status is 1, turn on the Relay3
+     {
+      digitalWrite(Relay3,LOW);
+      Serial.print("Relay 3 ON");
+    }
+if(rel3==0)                          // If, the Status is 0, turn Off the Relay3
+    {                                      
+      digitalWrite(Relay3,HIGH);
+      Serial.println("Relay 3 OFF");
+    }
+ if(rel4==1)                         // If, the Status is 1, turn on the Relay4
+     {
+      digitalWrite(Relay4,LOW);
+      Serial.println("Relay 4 ON");
+    }
+if(rel4==0)                          // If, the Status is 0, turn Off the Relay4
+    {                                      
+      digitalWrite(Relay4,HIGH);
+      Serial.println("Relay 4 OFF");
+    }    
+}
